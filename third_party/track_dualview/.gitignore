@@ -1,0 +1,13 @@
+# Large files — download separately
+weights/
+checkpoints/
+test_output/
+
+# Python
+__pycache__/
+*.pyc
+
+# Old symlinks
+stabilityai
+shared
+checkpoint

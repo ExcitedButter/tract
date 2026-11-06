@@ -1,0 +1,110 @@
+# Track-Conditioned Dual-View World Model — Real-World Franka Panda
+# Per-view 192x192 (stacked 384x192, agentview top, wrist bottom).
+# S=192 chosen so S/8=24 is divisible by 8 — survives SVD's 3 stride-2
+# downsamples (24 → 12 → 6 → 3) without odd-floor mismatches. 224 does NOT
+# (28 → 14 → 7 → 4, upsample can't re-align to 7). Latent: 48×24.
+# Inherits from hybrid-checkpoint-128000 (DROID+LIBERO track pretrain, UNet + ControlNet).
+
+pretrained_model_name_or_path: checkpoints/svd
+pretrained_tokenizer_name_or_path: checkpoints/stable-diffusion-2-1-base
+
+# Shape (stacked view: 2S x S)
+height: 384
+width: 192
+per_view_size: 192
+
+video_seq_length: 16
+process_fps: 10
+motion_bucket_id: 180
+
+# Inherit from the LIBERO+DROID hybrid pretrain (has UNet + ControlNet; spatial
+# convs are size-agnostic, so 320->192 loads cleanly with strict=False).
+resume_from_checkpoint: checkpoints/track_dualview/hybrid-checkpoint-128000
+load_controlnet_path: checkpoints/track_dualview/hybrid-checkpoint-128000
+load_unet_path: checkpoints/track_dualview/hybrid-checkpoint-128000
+partial_finetune: false
+
+# Dataset
+data_loader_type: realworld_dualview
+dataset_path: data/task_data_192_dualview_tracks
+dataset_name: REALWORLD_DUALVIEW
+training_view: dualview                               # sentinel; loader ignores
+dataloader_num_workers: 4
+validation_img_folder: data/task_data_192_dualview_tracks/validation_refs
+
+# Hybrid conditioning settings (reused per view — blur/dot sizes scale with H=per_view_size)
+conditioning_channels: 3
+use_view_specific_colors: true
+dot_range_agentview: 12
+dot_range_wrist: 8
+dilate: true
+
+# Training
+learning_rate: 0.000001
+train_batch_size: 4
+gradient_accumulation_steps: 4
+num_train_iters: 230001
+lr_warmup_steps: 500
+mixed_precision: fp16
+gradient_checkpointing: 1
+scheduler: EDM
+
+# Both UNet and ControlNet trainable
+train_unet: true
+train_controlnet: true
+
+# Checkpointing
+checkpointing_steps: 5000
+checkpoints_total_limit: 5
+validation_step: 100
+validation_store_folder: outputs/track_dualview/validation_videos_dualview_192
+output_dir: outputs/track_dualview/checkpoints_dualview_192_v2
+
+# Training dataset uses precomputed VAE latents (root/video_latents_stacked +
+# root/controlnet_latents_perwindow in the preprocessed hdf5). Validation forces
+# the legacy render path so the GT/trajectory gifs work. Doc flag only — the
+# dataset loader auto-detects precomputes and the training loop branches on them.
+use_precomputed_latents: true
+
+# Text conditioning
+use_text: true
+empty_prompts_proportion: 0.1
+
+# Noise / augmentation
+train_noise_aug_strength: 0.1
+conditioning_dropout_prob: 0.1
+noise_mean: 0.7
+noise_std: 1.6
+flip_aug_prob: 0.0
+
+# Mask settings
+mask_unet_vae: false
+mask_controlnet_vae: false
+mask_proportion: 0.0
+
+# Not used but required by train_csvd.py
+use_instructpix2pix: false
+image_guidance_scale: 2.5
+use_8bit_adam: false
+mix_ambiguous: false
+
+# Optimizer
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0.01
+adam_epsilon: 0.00001
+scale_lr: false
+
+# ControlNet
+inner_conditioning_scale: 1.0
+outer_conditioning_scale: 1.0
+
+# Inference for validation
+num_inference_steps: 25
+inference_noise_aug_strength: 0.1
+inference_max_guidance_scale: 3.0
+inference_guess_mode: false
+
+# Logging
+report_to: tensorboard
+seed: 42
