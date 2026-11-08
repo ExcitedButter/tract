@@ -26,6 +26,7 @@ This repository contains code only — no datasets, checkpoints or results.
 7. [VLAC critic](#6-vlac-critic)
 8. [Generating the track-labelled training set](#7-generating-the-track-labelled-training-set)
 9. [Reproducibility and troubleshooting](#8-reproducibility-and-troubleshooting)
+10. [Physical experiments](#9-physical-experiments)
 
 ## Repository layout
 
@@ -370,6 +371,11 @@ For the training set behind the reported model (`libero_cotracker_densegrid_merg
   π0.5-LIBERO params ~12 GB; each TrAct checkpoint ~12 GB.
 - **Ctrl-World downloads SVD again:** pass `--svd_path checkpoints/svd` (or put it there); the resolver
   checks `checkpoints/svd` and `third_party/Ctrl-World/checkpoints/svd` before downloading.
+
+## 9. Physical experiments
+
+The real-robot results in the paper used checkpoints fine-tuned from the pretrained models in this
+repository, with adjusted sampling parameters.
 
 ## License
 
