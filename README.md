@@ -375,7 +375,8 @@ For the training set behind the reported model (`libero_cotracker_densegrid_merg
 ## 9. Physical experiments
 
 The real-robot results in the paper used checkpoints fine-tuned from the pretrained models in this
-repository, with adjusted sampling parameters.
+repository, with adjusted sampling parameters. Details of the fine-tuning and sampling parameters are in the
+[paper](https://arxiv.org/abs/2608.24101).
 
 ## License
 
